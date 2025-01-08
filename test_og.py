@@ -8,7 +8,6 @@ import numpy as np
 import torch
 import yaml
 from tqdm import tqdm
-import matplotlib.pyplot as plt
 
 from models.experimental import attempt_load
 from utils.datasets import create_dataloader
@@ -41,8 +40,7 @@ def test(data,
          half_precision=True,
          trace=False,
          is_coco=False,
-         v5_metric=False,
-         target_class=None):
+         v5_metric=False):
     # Initialize/load model and set device
     training = model is not None
     if training:  # called by train.py
@@ -77,7 +75,6 @@ def test(data,
             data = yaml.load(f, Loader=yaml.SafeLoader)
     check_dataset(data)  # check
     nc = 1 if single_cls else int(data['nc'])  # number of classes
-    nc_orig = nc  # Store original number of classes
     iouv = torch.linspace(0.5, 0.95, 10).to(device)  # iou vector for mAP@0.5:0.95
     niou = iouv.numel()
 
@@ -104,19 +101,6 @@ def test(data,
     p, r, f1, mp, mr, map50, map, t0, t1 = 0., 0., 0., 0., 0., 0., 0., 0., 0.
     loss = torch.zeros(3, device=device)
     jdict, stats, ap, ap_class, wandb_images = [], [], [], [], []
-
-    # After loading model and names
-    if target_class is not None:
-        # Convert target_class string to class ID if it exists in names
-        target_class_id = None
-        for k, v in names.items():
-            if v == target_class:
-                target_class_id = k
-                break
-        if target_class_id is None:
-            raise ValueError(f"Target class '{target_class}' not found in model classes: {list(names.values())}")
-        print(f"Evaluating only class: {target_class} (ID: {target_class_id})")
-
     for batch_i, (img, targets, paths, shapes) in enumerate(tqdm(dataloader, desc=s)):
         img = img.to(device, non_blocking=True)
         img = img.half() if half else img.float()  # uint8 to fp16/32
@@ -140,23 +124,6 @@ def test(data,
             t = time_synchronized()
             out = non_max_suppression(out, conf_thres=conf_thres, iou_thres=iou_thres, labels=lb, multi_label=True)
             t1 += time_synchronized() - t
-
-            # Filter predictions if target_class specified
-            if target_class is not None:
-                filtered_out = []
-                for pred in out:
-                    if len(pred):
-                        # Keep only predictions for target class
-                        mask = pred[:, 5] == target_class_id
-                        filtered_out.append(pred[mask])
-                    else:
-                        filtered_out.append(pred)
-                out = filtered_out
-
-                # Filter targets to only include target class
-                if len(targets):
-                    mask = targets[:, 1] == target_class_id
-                    targets = targets[mask]
 
         # Statistics per image
         for si, pred in enumerate(out):
@@ -251,208 +218,73 @@ def test(data,
             f = save_dir / f'test_batch{batch_i}_pred.jpg'  # predictions
             Thread(target=plot_images, args=(img, output_to_target(out), paths, f, names), daemon=True).start()
 
-    # Initialize variables
-    nt = np.zeros(1)  # Initialize nt as zeros array
-    p = r = mp = mr = map50 = map = 0.0  # Initialize metrics
-
     # Compute statistics
     stats = [np.concatenate(x, 0) for x in zip(*stats)]  # to numpy
     if len(stats) and stats[0].any():
-        # Calculate nt for both cases
-        if target_class is not None:
-            target_mask = stats[3] == target_class_id
-            nt = np.bincount(stats[3][target_mask].astype(np.int64), minlength=1)
-        else:
-            nt = np.bincount(stats[3].astype(np.int64), minlength=nc)  # number of targets per class
-
-        # Rest of plotting code
-        if plots:
-            if target_class is not None:
-                # Filter stats for target class
-                target_mask = stats[3] == target_class_id
-                pred_mask = stats[2] == target_class_id
-                
-                # Keep all predictions but remap target class to 0
-                filtered_stats = [
-                    stats[0][pred_mask],  # confidence scores for target class predictions
-                    np.zeros_like(stats[1][pred_mask]),  # remap to class 0
-                    np.zeros_like(stats[2][pred_mask]),  # remap to class 0
-                    np.zeros_like(stats[3][target_mask])  # remap to class 0
-                ]
-                
-                # Create names dictionary with class 0
-                names_dict = {0: target_class}
-                
-                # Use ap_per_class for AP calculation and curves
-                p_curve, r_curve, ap, f1, ap_class = ap_per_class(*filtered_stats, plot=plots, v5_metric=v5_metric,
-                                                                 save_dir=save_dir, names=names_dict)
-                
-                # Get AP values
-                ap50 = ap[:, 0]  # AP@0.5
-                ap = ap.mean(1)  # AP@0.5:0.95
-                
-                # Calculate mean metrics
-                mp = p_curve.mean()
-                mr = r_curve.mean()
-                map50 = ap50.mean()
-                map = ap.mean()
-                
-                # Create binary confusion matrix
-                matrix_data = confusion_matrix.matrix
-                if torch.is_tensor(matrix_data):
-                    matrix_data = matrix_data.cpu()
-                
-                binary_matrix = np.zeros((2, 2))
-                binary_matrix[0, 0] = matrix_data[target_class_id, target_class_id]  # TP
-                binary_matrix[0, 1] = matrix_data[target_class_id, -1]  # FN
-                binary_matrix[1, 0] = matrix_data[-1, target_class_id]  # FP
-                binary_matrix[1, 1] = 0  # TN (not tracked)
-                
-                # Calculate metrics from binary confusion matrix
-                TP = float(binary_matrix[0, 0])
-                FP = float(binary_matrix[1, 0])
-                FN = float(binary_matrix[0, 1])
-                
-                # Calculate precision and recall
-                precision = TP / (TP + FP) if (TP + FP) > 0 else 0
-                recall = TP / (TP + FN) if (TP + FN) > 0 else 0
-                f1_score = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0
-                
-                # Set metrics
-                p = np.array([precision])
-                r = np.array([recall])
-                f1 = np.array([f1_score])
-                
-                # Set mean metrics
-                mp, mr = precision, recall
-                map50, map = ap50.mean(), ap.mean()  # Keep AP from ap_per_class
-                
-                # Custom binary confusion matrix plot
-                names_binary = [target_class, 'background']
-                plt.figure(figsize=(10, 8))
-                plt.imshow(binary_matrix, interpolation='nearest', cmap='Blues')
-                plt.title('Confusion Matrix')
-                plt.ylabel('True')
-                plt.xlabel('Predicted')
-                
-                # Add text annotations
-                thresh = binary_matrix.max() / 2.
-                for i in range(2):
-                    for j in range(2):
-                        plt.text(j, i, f'{binary_matrix[i, j]:.0f}',
-                                horizontalalignment="center",
-                                color="white" if binary_matrix[i, j] > thresh else "black")
-                
-                plt.xticks([0, 1], names_binary)
-                plt.yticks([0, 1], names_binary)
-                plt.savefig(str(save_dir / 'confusion_matrix.png'))
-                plt.close()
-                
-                print(f"\nPlots saved to {save_dir}")
-            else:
-                confusion_matrix.plot(save_dir=save_dir, names=list(names.values()))
-        
-        if wandb_logger and wandb_logger.wandb:
-            val_batches = [wandb_logger.wandb.Image(str(f), caption=f.name) 
-                          for f in sorted(save_dir.glob('test*.jpg'))]
-            wandb_logger.log({"Validation": val_batches})
-    
-    if wandb_images:
-        wandb_logger.log({"Bounding Box Debugger/Images": wandb_images})
+        p, r, ap, f1, ap_class = ap_per_class(*stats, plot=plots, v5_metric=v5_metric, save_dir=save_dir, names=names)
+        ap50, ap = ap[:, 0], ap.mean(1)  # AP@0.5, AP@0.5:0.95
+        mp, mr, map50, map = p.mean(), r.mean(), ap50.mean(), ap.mean()
+        nt = np.bincount(stats[3].astype(np.int64), minlength=nc)  # number of targets per class
+    else:
+        nt = torch.zeros(1)
 
     # Print results
     pf = '%20s' + '%12i' * 2 + '%12.3g' * 4  # print format
-    print('\nSummary Results:')
-    print(f"{'Class':20s}{'Images':>12s}{'Labels':>12s}{'P':>12s}{'R':>12s}{'mAP@.5':>12s}{'mAP@.5:.95':>12s}")
     print(pf % ('all', seen, nt.sum(), mp, mr, map50, map))
 
     # Print results per class
-    if target_class is not None:
-        print('\nPer-class Results:')
-        print(pf % (target_class, seen, nt[0], p[0], r[0], ap50[0], ap[0]))
-    elif (verbose or (nc < 50 and not training)) and nc > 1 and len(stats):
+    if (verbose or (nc < 50 and not training)) and nc > 1 and len(stats):
         for i, c in enumerate(ap_class):
             print(pf % (names[c], seen, nt[c], p[i], r[i], ap50[i], ap[i]))
 
     # Print speeds
     t = tuple(x / seen * 1E3 for x in (t0, t1, t0 + t1)) + (imgsz, imgsz, batch_size)  # tuple
     if not training:
-        print('\nSpeed: %.1f/%.1f/%.1f ms inference/NMS/total per %gx%g image at batch-size %g' % t)
+        print('Speed: %.1f/%.1f/%.1f ms inference/NMS/total per %gx%g image at batch-size %g' % t)
 
-    # Save results
+    # Plots
+    if plots:
+        confusion_matrix.plot(save_dir=save_dir, names=list(names.values()))
+        if wandb_logger and wandb_logger.wandb:
+            val_batches = [wandb_logger.wandb.Image(str(f), caption=f.name) for f in sorted(save_dir.glob('test*.jpg'))]
+            wandb_logger.log({"Validation": val_batches})
+    if wandb_images:
+        wandb_logger.log({"Bounding Box Debugger/Images": wandb_images})
+
+    # Save JSON
+    if save_json and len(jdict):
+        w = Path(weights[0] if isinstance(weights, list) else weights).stem if weights is not None else ''  # weights
+        anno_json = './coco/annotations/instances_val2017.json'  # annotations json
+        pred_json = str(save_dir / f"{w}_predictions.json")  # predictions json
+        print('\nEvaluating pycocotools mAP... saving %s...' % pred_json)
+        with open(pred_json, 'w') as f:
+            json.dump(jdict, f)
+
+        try:  # https://github.com/cocodataset/cocoapi/blob/master/PythonAPI/pycocoEvalDemo.ipynb
+            from pycocotools.coco import COCO
+            from pycocotools.cocoeval import COCOeval
+
+            anno = COCO(anno_json)  # init annotations api
+            pred = anno.loadRes(pred_json)  # init predictions api
+            eval = COCOeval(anno, pred, 'bbox')
+            if is_coco:
+                eval.params.imgIds = [int(Path(x).stem) for x in dataloader.dataset.img_files]  # image IDs to evaluate
+            eval.evaluate()
+            eval.accumulate()
+            eval.summarize()
+            map, map50 = eval.stats[:2]  # update results (mAP@0.5:0.95, mAP@0.5)
+        except Exception as e:
+            print(f'pycocotools unable to run: {e}')
+
+    # Return results
+    model.float()  # for training
     if not training:
-        # Save confusion matrix
-        if plots:
-            if target_class is not None:
-                names_binary = [target_class, 'background']
-                
-                # Create a figure and axis for confusion matrix
-                plt.figure(figsize=(10, 8))
-                plt.imshow(binary_matrix, interpolation='nearest', cmap='Blues')
-                plt.title('Confusion Matrix')
-                plt.ylabel('True')
-                plt.xlabel('Predicted')
-                
-                # Add text annotations
-                thresh = binary_matrix.max() / 2.
-                for i in range(2):
-                    for j in range(2):
-                        plt.text(j, i, f'{binary_matrix[i, j]:.0f}',
-                                horizontalalignment="center",
-                                color="white" if binary_matrix[i, j] > thresh else "black")
-                
-                plt.xticks([0, 1], names_binary)
-                plt.yticks([0, 1], names_binary)
-                plt.savefig(str(save_dir / 'confusion_matrix.png'))
-                plt.close()
-                
-                # Generate points for curves
-                conf_thresholds = np.linspace(0, 1, 1000)
-                precisions = np.full_like(conf_thresholds, precision)
-                recalls = np.full_like(conf_thresholds, recall)
-                f1_scores = np.full_like(conf_thresholds, f1[0])
-                
-                # Plot curves
-                plot_curves(recalls, precisions, save_dir, 'PR_curve')  # PR curve
-                plot_curves(conf_thresholds, precisions, save_dir, 'P_curve')  # Precision curve
-                plot_curves(conf_thresholds, recalls, save_dir, 'R_curve')  # Recall curve
-                plot_curves(conf_thresholds, f1_scores, save_dir, 'F1_curve')  # F1 curve
-                
-                print(f"\nPlots saved to {save_dir}")
-            else:
-                confusion_matrix.plot(save_dir=save_dir, names=list(names.values()))
-        
-        # Save summary to a text file
-        with open(save_dir / 'summary.txt', 'w') as f:
-            f.write('Summary Results:\n')
-            f.write(f"{'Class':20s}{'Images':>12s}{'Labels':>12s}{'P':>12s}{'R':>12s}{'mAP@.5':>12s}{'mAP@.5:.95':>12s}\n")
-            f.write(pf % ('all', seen, nt.sum(), mp, mr, map50, map) + '\n')
-            if target_class is not None:
-                f.write('\nPer-class Results:\n')
-                f.write(pf % (target_class, seen, nt[0], p[0], r[0], ap50[0], ap[0]) + '\n')
-                f.write('\nBinary Classification Metrics:\n')
-                f.write(f"TP: {TP:.0f}, FP: {FP:.0f}, FN: {FN:.0f}\n")
-                f.write(f"Precision: {precision:.3f}, Recall: {recall:.3f}\n")
-        
-        print(f"\nResults saved to {save_dir}")
+        s = f"\n{len(list(save_dir.glob('labels/*.txt')))} labels saved to {save_dir / 'labels'}" if save_txt else ''
+        print(f"Results saved to {save_dir}{s}")
     maps = np.zeros(nc) + map
     for i, c in enumerate(ap_class):
         maps[c] = ap[i]
     return (mp, mr, map50, map, *(loss.cpu() / len(dataloader)).tolist()), maps, t
-
-
-def plot_curves(px, py, save_dir, name):
-    """Plot precision-recall curve"""
-    fig, ax = plt.figure(figsize=(9, 6)), plt.gca()
-    ax.plot(px, py, linewidth=3, color='blue')
-    ax.set_xlabel('Recall' if name == 'PR_curve' else 'Confidence')
-    ax.set_ylabel('Precision' if name == 'PR_curve' else name.split('_')[0])
-    ax.set_xlim(0, 1)
-    ax.set_ylim(0, 1)
-    ax.grid(True)
-    fig.tight_layout()
-    fig.savefig(Path(save_dir) / f'{name}.png', dpi=250)
-    plt.close()
 
 
 if __name__ == '__main__':
@@ -477,8 +309,6 @@ if __name__ == '__main__':
     parser.add_argument('--exist-ok', action='store_true', help='existing project/name ok, do not increment')
     parser.add_argument('--no-trace', action='store_true', help='don`t trace model')
     parser.add_argument('--v5-metric', action='store_true', help='assume maximum recall as 1.0 in AP calculation')
-    parser.add_argument('--target-class', type=str, default=None, 
-                       help='specify a target class name for evaluation and visualization')
     opt = parser.parse_args()
     opt.save_json |= opt.data.endswith('coco.yaml')
     opt.data = check_file(opt.data)  # check file
@@ -500,8 +330,7 @@ if __name__ == '__main__':
              save_hybrid=opt.save_hybrid,
              save_conf=opt.save_conf,
              trace=not opt.no_trace,
-             v5_metric=opt.v5_metric,
-             target_class=opt.target_class
+             v5_metric=opt.v5_metric
              )
 
     elif opt.task == 'speed':  # speed benchmarks

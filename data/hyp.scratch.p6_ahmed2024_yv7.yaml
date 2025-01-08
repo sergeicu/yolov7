@@ -1,0 +1,59 @@
+
+
+################################################################################
+# changed parameters
+################################################################################
+# changes made as per: https://claude.ai/chat/8e1dd5ec-a202-43dd-8eb0-f82d9f487474
+# and as per this paper: https://github.com/ammarlodhi255/pediatric_wrist_abnormality_detection-end-to-end-implementation?tab=readme-ov-file
+
+# learning rate 
+lrf: 0.1   # change to 0.1 to match final lr of 1x10^-1 
+# lrf: 0.2  # final OneCycleLR learning rate (lr0 * lrf)
+
+
+# image augmentation - zero because of grayscale images
+hsv_h: 0.0  # image HSV-Hue augmentation (fraction)
+hsv_s: 0.0  # image HSV-Saturation augmentation (fraction)
+hsv_v: 0.0  # image HSV-Value augmentation (fraction)
+
+# image augmentation - 
+# Grayscale-appropriate augmentations
+degrees: 10.0  # rotation helps with orientation variation
+translate: 0.2  # translation for position variation
+scale: 0.5     # scale changes for size variation
+shear: 2.0     # shear for perspective changes
+flipud: 0.5    # flips help with orientation invariance
+fliplr: 0.5
+mosaic: 1.0    # mosaic helps learn smaller features
+mixup: 0.15    # mixup for regularization
+
+
+################################################################################
+# parameters that are kept the same below 
+################################################################################
+
+# optimizer parameters (other)
+lr0: 0.01  # initial learning rate (SGD=1E-2, Adam=1E-3)
+momentum: 0.937  # SGD momentum/Adam beta1
+weight_decay: 0.0005  # optimizer weight decay 5e-4
+warmup_epochs: 3.0  # warmup epochs (fractions ok)
+warmup_momentum: 0.8  # warmup initial momentum
+warmup_bias_lr: 0.1  # warmup initial bias lr
+
+# LOSS parameters 
+box: 0.05  # box loss gain
+cls: 0.3  # cls loss gain
+cls_pw: 1.0  # cls BCELoss positive_weight
+obj: 0.7  # obj loss gain (scale with pixels)
+obj_pw: 1.0  # obj BCELoss positive_weight
+iou_t: 0.20  # IoU training threshold
+anchor_t: 4.0  # anchor-multiple threshold
+# anchors: 3  # anchors per output layer (0 to ignore)
+fl_gamma: 0.0  # focal loss gamma (efficientDet default gamma=1.5)
+
+
+# other parameters 
+perspective: 0.0  # image perspective (+/- fraction), range 0-0.001
+copy_paste: 0.0  # image copy paste (probability)
+paste_in: 0.0  # image copy paste (probability), use 0 for faster training
+loss_ota: 0 # use ComputeLossOTA, use 0 for faster training
