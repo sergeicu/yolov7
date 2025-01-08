@@ -252,10 +252,19 @@ def train(hyp, opt, device, tb_writer=None):
 
     # Process 0
     if rank in [-1, 0]:
-        testloader = create_dataloader(test_path, imgsz_test, batch_size * 2, gs, opt,  # testloader
+        # Original validation dataloader
+        testloader = create_dataloader(test_path, imgsz_test, batch_size * 2, gs, opt,
                                        hyp=hyp, cache=opt.cache_images and not opt.notest, rect=True, rank=-1,
                                        world_size=opt.world_size, workers=opt.workers,
                                        pad=0.5, prefix=colorstr('val: '))[0]
+        
+        # Additional validation dataloader (if specified)
+        additional_testloader = None
+        if opt.additional_val:
+            additional_testloader = create_dataloader(opt.additional_val, imgsz_test, batch_size * 2, gs, opt,
+                                                       hyp=hyp, cache=opt.cache_images and not opt.notest, rect=True, rank=-1,
+                                                       world_size=opt.world_size, workers=opt.workers,
+                                                       pad=0.5, prefix=colorstr('additional_val: '))[0]
 
         if not opt.resume:
             labels = np.concatenate(dataset.labels, 0)
@@ -409,19 +418,37 @@ def train(hyp, opt, device, tb_writer=None):
             final_epoch = epoch + 1 == epochs
             if not opt.notest or final_epoch:  # Calculate mAP
                 wandb_logger.current_epoch = epoch + 1
+                # Original validation
                 results, maps, times = test.test(data_dict,
-                                                 batch_size=batch_size * 2,
-                                                 imgsz=imgsz_test,
-                                                 model=ema.ema,
-                                                 single_cls=opt.single_cls,
-                                                 dataloader=testloader,
-                                                 save_dir=save_dir,
-                                                 verbose=nc < 50 and final_epoch,
-                                                 plots=plots and final_epoch,
-                                                 wandb_logger=wandb_logger,
-                                                 compute_loss=compute_loss,
-                                                 is_coco=is_coco,
-                                                 v5_metric=opt.v5_metric)
+                                                batch_size=batch_size * 2,
+                                                imgsz=imgsz_test,
+                                                model=ema.ema,
+                                                single_cls=opt.single_cls,
+                                                dataloader=testloader,
+                                                save_dir=save_dir,
+                                                verbose=nc < 50 and final_epoch,
+                                                plots=plots and final_epoch,
+                                                wandb_logger=wandb_logger,
+                                                compute_loss=compute_loss,
+                                                is_coco=is_coco,
+                                                v5_metric=opt.v5_metric)
+                
+                # Additional validation (if specified)
+                if additional_testloader:
+                    additional_results, additional_maps, _ = test.test(data_dict,
+                                                    batch_size=batch_size * 2,
+                                                    imgsz=imgsz_test,
+                                                    model=ema.ema,
+                                                    single_cls=opt.single_cls,
+                                                    dataloader=additional_testloader,
+                                                    save_dir=save_dir,
+                                                    verbose=nc < 50 and final_epoch,
+                                                    plots=False,  # Don't create duplicate plots
+                                                    wandb_logger=wandb_logger,
+                                                    compute_loss=compute_loss,
+                                                    is_coco=is_coco,
+                                                    v5_metric=opt.v5_metric,
+                                                    prefix='additional_val/')  # Add prefix for wandb logging
 
             # Write
             with open(results_file, 'a') as f:
@@ -461,14 +488,28 @@ def train(hyp, opt, device, tb_writer=None):
                 torch.save(ckpt, last)
                 if best_fitness == fi:
                     torch.save(ckpt, best)
-                if (best_fitness == fi) and (epoch >= 200):
-                    torch.save(ckpt, wdir / 'best_{:03d}.pt'.format(epoch))
-                if epoch == 0:
-                    torch.save(ckpt, wdir / 'epoch_{:03d}.pt'.format(epoch))
-                elif ((epoch+1) % 25) == 0:
-                    torch.save(ckpt, wdir / 'epoch_{:03d}.pt'.format(epoch))
-                elif epoch >= (epochs-5):
-                    torch.save(ckpt, wdir / 'epoch_{:03d}.pt'.format(epoch))
+                
+                # Different saving patterns based on finetune flag
+                if opt.finetune:
+                    # Save best model only after epoch 50 for finetuning
+                    if (best_fitness == fi) and (epoch >= 50):
+                        torch.save(ckpt, wdir / 'best_{:03d}.pt'.format(epoch))
+                    if epoch == 0:
+                        torch.save(ckpt, wdir / 'epoch_{:03d}.pt'.format(epoch))
+                    elif epoch <= 50 and ((epoch+1) % 5) == 0:  # Save every 5 epochs up to epoch 50
+                        torch.save(ckpt, wdir / 'epoch_{:03d}.pt'.format(epoch))
+                    elif epoch > 50:  # Save every epoch after epoch 50
+                        torch.save(ckpt, wdir / 'epoch_{:03d}.pt'.format(epoch))
+                else:
+                    # Original saving pattern
+                    if (best_fitness == fi) and (epoch >= 200):
+                        torch.save(ckpt, wdir / 'best_{:03d}.pt'.format(epoch))
+                    if epoch == 0:
+                        torch.save(ckpt, wdir / 'epoch_{:03d}.pt'.format(epoch))
+                    elif ((epoch+1) % 25) == 0:
+                        torch.save(ckpt, wdir / 'epoch_{:03d}.pt'.format(epoch))
+                    elif epoch >= (epochs-5):
+                        torch.save(ckpt, wdir / 'epoch_{:03d}.pt'.format(epoch))
                 if wandb_logger.wandb:
                     if ((epoch + 1) % opt.save_period == 0 and not final_epoch) and opt.save_period != -1:
                         wandb_logger.log_model(
@@ -558,6 +599,8 @@ if __name__ == '__main__':
     parser.add_argument('--save_period', type=int, default=-1, help='Log model after every "save_period" epoch')
     parser.add_argument('--artifact_alias', type=str, default="latest", help='version of dataset artifact to be used')
     parser.add_argument('--v5-metric', action='store_true', help='assume maximum recall as 1.0 in AP calculation')
+    parser.add_argument('--finetune', action='store_true', help='use finetuning checkpoint saving pattern')
+    parser.add_argument('--additional-val', type=str, default='', help='path to additional validation data')
     opt = parser.parse_args()
 
     # Set DDP variables

@@ -1,7 +1,7 @@
 
-train: /fileserver/Rad-Afacan-e2/Public/serge/code/llm/experiments/LISA/labeller_running_for_andy/outputs_backup_dec31/andys_labels_final_boxes_correct_test/images/test # train
-val: /fileserver/Rad-Afacan-e2/Public/serge/code/llm/experiments/LISA/labeller_running_for_andy/outputs_backup_dec31/andys_labels_final_boxes_correct_test/images/test
-test: /fileserver/Rad-Afacan-e2/Public/serge/code/llm/experiments/LISA/labeller_running_for_andy/outputs_backup_dec31/andys_labels_final_boxes_correct_test/images/test
+train: /fileserver/Rad-Afacan-e2/Public/serge/code/llm/experiments/LISA/experiments/labeller_running_for_andy/outputs_backup_dec31/andys_labels_final_boxes_correct_test/images/test # train
+val: /fileserver/Rad-Afacan-e2/Public/serge/code/llm/experiments/LISA/experiments/labeller_running_for_andy/outputs_backup_dec31/andys_labels_final_boxes_correct_test/images/test
+test: /fileserver/Rad-Afacan-e2/Public/serge/code/llm/experiments/LISA/experiments/labeller_running_for_andy/outputs_backup_dec31/andys_labels_final_boxes_correct_test/images/test
 
 # number of classes
 nc: 9
