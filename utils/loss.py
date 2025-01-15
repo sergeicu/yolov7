@@ -1210,6 +1210,16 @@ class ComputeLossAuxOTA:
 
         # Losses
         for i in range(self.nl):  # layer index, layer predictions
+            # print(i)
+            # self.nl -> 3 
+            # len(p) -> 3
+            
+            # self.nl -> 4 
+            # len(p) -> 8 
+            
+            # from IPython import embed; embed()
+            
+            
             pi = p[i]
             pi_aux = p[i+self.nl]
             b, a, gj, gi = bs[i], as_[i], gjs[i], gis[i]  # image, anchor, gridy, gridx
@@ -1401,7 +1411,8 @@ class ComputeLossAuxOTA:
             fg_mask_inboxes = matching_matrix.sum(0) > 0.0
             matched_gt_inds = matching_matrix[:, fg_mask_inboxes].argmax(0)
         
-            from_which_layer = from_which_layer[fg_mask_inboxes]
+            # from_which_layer = from_which_layer[fg_mask_inboxes]
+            from_which_layer = from_which_layer.to(fg_mask_inboxes.device)[fg_mask_inboxes]             
             all_b = all_b[fg_mask_inboxes]
             all_a = all_a[fg_mask_inboxes]
             all_gj = all_gj[fg_mask_inboxes]
@@ -1554,7 +1565,9 @@ class ComputeLossAuxOTA:
             fg_mask_inboxes = matching_matrix.sum(0) > 0.0
             matched_gt_inds = matching_matrix[:, fg_mask_inboxes].argmax(0)
         
-            from_which_layer = from_which_layer[fg_mask_inboxes]
+            # from_which_layer = from_which_layer[fg_mask_inboxes]
+            from_which_layer = from_which_layer.to(fg_mask_inboxes.device)[fg_mask_inboxes]
+
             all_b = all_b[fg_mask_inboxes]
             all_a = all_a[fg_mask_inboxes]
             all_gj = all_gj[fg_mask_inboxes]
