@@ -98,12 +98,50 @@ def train(hyp, opt, device, tb_writer=None):
     train_path = data_dict['train']
     test_path = data_dict['val']
 
-    # Freeze
-    freeze = []  # parameter names to freeze (full or partial)
+    # Define layer indices for each section
+    BACKBONE_LAYERS = list(range(0, 47))    # layers 0-46
+    NECK_LAYERS = list(range(47, 95))       # layers 47-94
+    HEAD_LAYERS = list(range(95, 106))      # layers 95+
+
+    freeze = []
+    if hyp.get('finetune_mode', 'none') != 'none':
+        mode = hyp['finetune_mode']
+        
+        if mode == 'freeze_backbone':
+            # Most common approach: freeze backbone, train neck & head
+            freeze = ['model.%i.' % x for x in BACKBONE_LAYERS]
+            logger.info(f'Freezing backbone layers (0-46)')
+            
+        elif mode == 'progressive':
+            # Progressive unfreezing based on current epoch
+            current_epoch = hyp.get('current_epoch', 0)
+            progressive_epochs = hyp.get('progressive_epochs', [0, 20, 40])  # when to unfreeze more layers
+            
+            if current_epoch < progressive_epochs[1]:
+                # Phase 1: Train only head
+                freeze = ['model.%i.' % x for x in BACKBONE_LAYERS + NECK_LAYERS]
+                logger.info(f'Progressive Phase 1: Training only head')
+            elif current_epoch < progressive_epochs[2]:
+                # Phase 2: Train neck and head
+                freeze = ['model.%i.' % x for x in BACKBONE_LAYERS]
+                logger.info(f'Progressive Phase 2: Training neck and head')
+            else:
+                # Phase 3: Train all layers
+                freeze = []
+                logger.info(f'Progressive Phase 3: Training all layers')
+                
+        elif mode == 'full':
+            # Full fine-tuning: no frozen layers, but use small learning rate
+            freeze = []
+            # Adjust learning rate
+            hyp['lr0'] *= 0.1  # reduce learning rate by 10x
+            logger.info(f'Full fine-tuning mode with reduced learning rate: {hyp["lr0"]}')
+
+    # Apply freezing
     for k, v in model.named_parameters():
-        v.requires_grad = True  # train all layers
+        v.requires_grad = True  # train all layers by default
         if any(x in k for x in freeze):
-            print('freezing %s' % k)
+            logger.info(f'Freezing layer: {k}')
             v.requires_grad = False
 
     # Optimizer
@@ -447,8 +485,16 @@ def train(hyp, opt, device, tb_writer=None):
                                                     wandb_logger=wandb_logger,
                                                     compute_loss=compute_loss,
                                                     is_coco=is_coco,
-                                                    v5_metric=opt.v5_metric,
-                                                    prefix='additional_val/')  # Add prefix for wandb logging
+                                                    v5_metric=opt.v5_metric)
+                    
+                    # Log additional validation results to wandb separately
+                    if wandb_logger.wandb:
+                        wandb_logger.wandb.log({
+                            "additional_val/precision": additional_results[0],
+                            "additional_val/recall": additional_results[1],
+                            "additional_val/mAP_0.5": additional_results[2],
+                            "additional_val/mAP_0.5:0.95": additional_results[3]
+                        })
 
             # Write
             with open(results_file, 'a') as f:
@@ -517,6 +563,13 @@ def train(hyp, opt, device, tb_writer=None):
                 del ckpt
 
         # end epoch ----------------------------------------------------------------------------------------------------
+
+        # Inside the training loop, after each epoch
+        if hyp.get('finetune_mode') == 'progressive':
+            hyp['current_epoch'] = epoch
+            # Save updated hyperparameters
+            with open(save_dir / 'hyp.yaml', 'w') as f:
+                yaml.dump(hyp, f, sort_keys=False)
     # end training
     if rank in [-1, 0]:
         # Plots
