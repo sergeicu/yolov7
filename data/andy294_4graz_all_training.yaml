@@ -1,0 +1,10 @@
+# ALL 
+train: /lab-share/Rad-Afacan-e2/Public/serge/code/llm/experiments/LISA/experiments/labeller_running_for_andy/outputs_backup_dec31/andys_labels_final_boxes_all_test/images/train # train
+val: /lab-share/Rad-Afacan-e2/Public/serge/code/llm/experiments/LISA/experiments/labeller_running_for_andy/outputs_backup_dec31/andys_labels_final_boxes_all_test/images/train # train
+test: /lab-share/Rad-Afacan-e2/Public/serge/code/llm/experiments/LISA/experiments/labeller_running_for_andy/outputs_backup_dec31/andys_labels_final_boxes_all_test/images/train # train
+
+# number of classes
+nc: 9
+
+# class names
+names: ["boneanomaly", "bonelesion", "foreignbody", "fracture", "metal", "periostealreaction", "pronatorsign", "softtissue", "text"]
