@@ -170,86 +170,15 @@ class ConfusionMatrix:
 
             fig = plt.figure(figsize=(12, 9), tight_layout=True)
             sn.set(font_scale=1.0 if self.nc < 50 else 0.8)  # for label size
-            labels = (0 < len(names) < 99)  # apply names to ticklabels
-            
-            # Handle labels based on matrix size
-            if array.shape[0] == 2:  # Binary classification case
-                xticklabels = yticklabels = names
-                array = array[:2, :2]  # Ensure we only use the 2x2 portion for binary case
-            else:  # Multi-class case with background
-                xticklabels = names + ['background FP'] if labels else "auto"
-                yticklabels = names + ['background FN'] if labels else "auto"
-            
-            # Create heatmap
-            sn.heatmap(array, 
-                       annot=True,  # Always show annotations
-                       annot_kws={"size": 8}, 
-                       cmap='Blues', 
-                       fmt='.2f', 
-                       square=True,
-                       xticklabels=xticklabels,
-                       yticklabels=yticklabels).set_facecolor((1, 1, 1))
+            labels = (0 < len(names) < 99) and len(names) == self.nc  # apply names to ticklabels
+            sn.heatmap(array, annot=self.nc < 30, annot_kws={"size": 8}, cmap='Blues', fmt='.2f', square=True,
+                       xticklabels=names + ['background FP'] if labels else "auto",
+                       yticklabels=names + ['background FN'] if labels else "auto").set_facecolor((1, 1, 1))
             fig.axes[0].set_xlabel('True')
             fig.axes[0].set_ylabel('Predicted')
-            
-            # Ensure directory exists
-            save_dir = Path(save_dir)
-            save_dir.mkdir(parents=True, exist_ok=True)
-            save_path = save_dir / 'confusion_matrix.png'
-            
-            # Save with higher DPI
-            fig.savefig(save_path, dpi=300, bbox_inches='tight')
-            plt.close(fig)  # Close the figure to free memory
-            
-            # Save confusion matrix values to text file
-            txt_path = save_dir / 'confusion_matrix_values.txt'
-            with open(txt_path, 'w') as f:
-                # Write header
-                f.write('Confusion Matrix Values (Normalized)\n')
-                f.write('Format: Predicted (rows) vs True (columns)\n\n')
-                
-                # Write column headers
-                f.write('{:>12s}'.format(''))  # Empty cell for row headers
-                for label in (xticklabels if isinstance(xticklabels, list) else names):
-                    f.write('{:>12s}'.format(str(label)))
-                f.write('\n')
-                
-                # Write normalized values
-                for i, row_label in enumerate(yticklabels if isinstance(yticklabels, list) else names):
-                    f.write('{:>12s}'.format(str(row_label)))
-                    for j in range(array.shape[1]):
-                        val = array[i, j]
-                        if np.isnan(val):
-                            f.write('{:>12s}'.format('-'))
-                        else:
-                            f.write('{:>12.3f}'.format(val))
-                    f.write('\n')
-                
-                # Write raw counts
-                f.write('\nRaw Counts:\n')
-                raw_matrix = self.matrix[:array.shape[0], :array.shape[1]]  # Match dimensions with normalized array
-                for i, row_label in enumerate(yticklabels if isinstance(yticklabels, list) else names):
-                    f.write('{:>12s}'.format(str(row_label)))
-                    for j in range(array.shape[1]):
-                        f.write('{:>12.0f}'.format(raw_matrix[i, j]))
-                    f.write('\n')
-                
-                # Add total counts
-                f.write('\nTotal counts:\n')
-                f.write(f'Total samples: {raw_matrix.sum():.0f}\n')
-                row_sums = raw_matrix.sum(axis=1)
-                col_sums = raw_matrix.sum(axis=0)
-                for i, label in enumerate(yticklabels if isinstance(yticklabels, list) else names):
-                    f.write(f'{label} (predicted): {row_sums[i]:.0f}\n')
-                for i, label in enumerate(xticklabels if isinstance(xticklabels, list) else names):
-                    f.write(f'{label} (true): {col_sums[i]:.0f}\n')
-            
-            print(f"Confusion matrix saved to {save_path}")
-            print(f"Confusion matrix values saved to {txt_path}")
-            return True
+            fig.savefig(Path(save_dir) / 'confusion_matrix.png', dpi=250)
         except Exception as e:
-            print(f"Error in plotting confusion matrix: {str(e)}")
-            return False
+            pass
 
     def print(self):
         for i in range(self.nc + 1):
