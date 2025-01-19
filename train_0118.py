@@ -38,6 +38,20 @@ from utils.wandb_logging.wandb_utils import WandbLogger, check_wandb_resume
 logger = logging.getLogger(__name__)
 
 
+def get_training_subset_loader(train_loader, val_size):
+    """Create a dataloader with a subset of training data matching validation size"""
+    # Get the first val_size samples from training dataset
+    subset_dataset = torch.utils.data.Subset(train_loader.dataset, range(val_size))
+    subset_loader = torch.utils.data.DataLoader(
+        subset_dataset,
+        batch_size=train_loader.batch_size,
+        num_workers=train_loader.num_workers,
+        pin_memory=train_loader.pin_memory,
+        collate_fn=train_loader.collate_fn
+    )
+    return subset_loader
+
+
 def train(hyp, opt, device, tb_writer=None):
     logger.info(colorstr('hyperparameters: ') + ', '.join(f'{k}={v}' for k, v in hyp.items()))
     save_dir, epochs, batch_size, total_batch_size, weights, rank, freeze = \
@@ -339,6 +353,9 @@ def train(hyp, opt, device, tb_writer=None):
                                        hyp=hyp, cache=opt.cache_images and not opt.notest, rect=True, rank=-1,
                                        world_size=opt.world_size, workers=opt.workers,
                                        pad=0.5, prefix=colorstr('val: '))[0]
+        
+        # Create training subset loader with same size as validation set
+        train_subset_loader = get_training_subset_loader(dataloader, len(testloader.dataset))
 
         if not opt.resume:
             labels = np.concatenate(dataset.labels, 0)
@@ -494,7 +511,7 @@ def train(hyp, opt, device, tb_writer=None):
             ema.update_attr(model, include=['yaml', 'nc', 'hyp', 'gr', 'names', 'stride', 'class_weights'])
             final_epoch = epoch + 1 == epochs
             if not opt.notest or final_epoch:  # Calculate mAP
-                wandb_logger.current_epoch = epoch + 1
+                # Validation mAP
                 results, maps, times = test.test(data_dict,
                                                  batch_size=batch_size * 2,
                                                  imgsz=imgsz_test,
@@ -508,10 +525,43 @@ def train(hyp, opt, device, tb_writer=None):
                                                  compute_loss=compute_loss,
                                                  is_coco=is_coco,
                                                  v5_metric=opt.v5_metric)
+                
+                # Training subset mAP
+                train_results, train_maps, _ = test.test(data_dict,
+                                                 batch_size=batch_size * 2,
+                                                 imgsz=imgsz_test,
+                                                 model=ema.ema,
+                                                 single_cls=opt.single_cls,
+                                                 dataloader=train_subset_loader,
+                                                 save_dir=save_dir,
+                                                 verbose=False,  # Reduce verbosity for training metrics
+                                                 plots=False,    # Don't create plots for training metrics
+                                                 wandb_logger=None,  # Don't log to wandb yet (we'll do it manually)
+                                                 compute_loss=compute_loss,
+                                                 is_coco=is_coco,
+                                                 v5_metric=opt.v5_metric)
+
+                # Log to wandb
+                if wandb_logger.wandb:
+                    # Log validation metrics as before
+                    wandb_logger.log({
+                        'metrics/precision': results[0],
+                        'metrics/recall': results[1],
+                        'metrics/mAP_0.5': results[2],
+                        'metrics/mAP_0.5:0.95': results[3],
+                        # Add training subset metrics to same panel with tr_ prefix
+                        'metrics/tr_precision': train_results[0],
+                        'metrics/tr_recall': train_results[1],
+                        'metrics/tr_mAP_0.5': train_results[2],
+                        'metrics/tr_mAP_0.5:0.95': train_results[3]
+                    })
+
+                # Update the results string (keeping only precision, recall, mAP metrics from training)
+                s = ('%10.4g' * 7 + '%10.4g' * 4) % (results + train_results[:4])  # Include only first 4 training results
 
             # Write
             with open(results_file, 'a') as f:
-                f.write(s + '%10.4g' * 7 % results + '\n')  # append metrics, val_loss
+                f.write(s + '\n')  # append metrics, val_loss
             if len(opt.name) and opt.bucket:
                 os.system('gsutil cp %s gs://%s/results/results%s.txt' % (results_file, opt.bucket, opt.name))
 
