@@ -37,6 +37,10 @@ git log --follow utils/loss.py
 
 
         # train without auxiliary lol 
+        img=640
+        name=TEST_REMOVE
+        data=data/andy294_4graz_all_histogram_matched_test_as_training.yaml        
+        hyp=data/hyp.scratch.p6_andylabels294_v4_1.yaml # increased weight decay to original 0.0005        
         cfg=cfg/training/yolov7_ch9_bonefracture.yaml
         python train_0118.py --workers 1 --device 0 --batch-size 1 \
             --data $data --img $img $img --cfg $cfg \
@@ -50,7 +54,7 @@ git log --follow utils/loss.py
             # this explains the reason why our finetuning was not working. 
             # the model that we were trying to finetune was not loading correctly. 
 
-            
+
 
         # lets try with pure test of test_og2.py 
         python test_og2.py --weights yolov7-p6-bonefracture.pt --data $data --img $img  --batch 1 --conf 0.001 --iou 0.65 --device 0 --name $name
