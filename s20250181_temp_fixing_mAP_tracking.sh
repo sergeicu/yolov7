@@ -37,11 +37,20 @@ git log --follow utils/loss.py
 
 
         # train without auxiliary lol 
-        python train_aux_0118_v2.py --workers 1 --device 0 --batch-size 1 \
+        cfg=cfg/training/yolov7_ch9_bonefracture.yaml
+        python train_0118.py --workers 1 --device 0 --batch-size 1 \
             --data $data --img $img $img --cfg $cfg \
             --weights yolov7-p6-bonefracture.pt --name ${name}_bs16 --hyp $hyp \
-            --project test_remove_mAP_tracking --entity sergeicu --finetune \
-            --additional-val $grazval                 
+            --project test_remove_mAP_tracking --entity sergeicu      
+
+        # conclusion:
+            # graz yolo paper incorrectly named the .pt file as yolov7-p6-bonefracture.pt
+            # this suggested a model that had auxiliary detection layers, but it did not 
+            # upon checking the config of the .pt file we realize that it is actually a standard yolov7 model
+            # this explains the reason why our finetuning was not working. 
+            # the model that we were trying to finetune was not loading correctly. 
+
+            
 
         # lets try with pure test of test_og2.py 
         python test_og2.py --weights yolov7-p6-bonefracture.pt --data $data --img $img  --batch 1 --conf 0.001 --iou 0.65 --device 0 --name $name

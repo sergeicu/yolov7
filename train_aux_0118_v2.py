@@ -88,6 +88,9 @@ def train(hyp, opt, device, tb_writer=None):
         print(f"\n=== Inspecting model file {weights} ===")
         # Load and inspect checkpoint
         ckpt = torch.load(weights, map_location=device)
+        print(f"Checkpoint keys: {ckpt.keys()}")
+        
+        # Debug prints for model structure
         if isinstance(ckpt, dict) and 'model' in ckpt:
             print("\nModel Structure:")
             model_to_inspect = ckpt['model']
@@ -99,19 +102,34 @@ def train(hyp, opt, device, tb_writer=None):
         # Load model using attempt_load for proper architecture loading
         model = attempt_load(weights, map_location=device)
         
+        # Debug prints for model configuration
+        print(f"\nModel Configuration:")
+        print(f"Original model classes: {model.nc}")
+        print(f"Original model names: {model.names}")
+        print(f"Target classes: {nc}")
+        print(f"Target names: {names}")
+        print(f"Model stride: {model.stride}")
+        print(f"Number of detection layers: {model.model[-1].nl}")
+        print(f"Model device: {next(model.parameters()).device}")
+        print(f"Model training mode: {model.training}")
+        print(f"Number of parameters: {sum(p.numel() for p in model.parameters())}")
+        
         # Update the number of classes if needed
         if nc != model.nc:
-            print(f"Updating number of classes from {model.nc} to {nc}")
+            print(f"\nUpdating number of classes from {model.nc} to {nc}")
             model.nc = nc
             model.names = names
             # Update the detection layer for new number of classes
             detection_layer = model.model[-1]
+            print(f"Detection layer type: {type(detection_layer).__name__}")
             detection_layer.nc = nc
             detection_layer.initialize_biases()
+            print("Detection layer updated successfully")
             
         # Enable gradient computation for all parameters
         for param in model.parameters():
             param.requires_grad = True
+        print(f"\nRequires grad enabled for all parameters")
 
     else:
         model = Model(opt.cfg, ch=3, nc=nc, anchors=hyp.get('anchors')).to(device)  # create
@@ -517,6 +535,54 @@ def train(hyp, opt, device, tb_writer=None):
             # Save updated hyperparameters
             with open(save_dir / 'hyp.yaml', 'w') as f:
                 yaml.dump(hyp, f, sort_keys=False)
+
+        # Add these prints before validation starts
+        if not opt.notest or final_epoch:
+            print("\n=== Pre-Validation Debug Info ===")
+            print(f"Test path: {test_path}")
+            print(f"Validation image size: {imgsz_test}")
+            print(f"Batch size for validation: {batch_size * 2}")
+            print(f"Number of classes: {nc}")
+            print(f"Model classes: {model.nc}")
+            print(f"Class names: {model.names}")
+            
+            # Check testloader
+            print("\n=== Testloader Info ===")
+            print(f"Number of validation batches: {len(testloader)}")
+            print(f"Testloader batch size: {testloader.batch_size}")
+            print(f"Testloader image size: {testloader.dataset.img_size}")
+            
+            # Check EMA model state
+            print("\n=== EMA Model State ===")
+            print(f"EMA device: {next(ema.ema.parameters()).device}")
+            print(f"EMA training mode: {ema.ema.training}")
+            print(f"EMA number of classes: {ema.ema.nc}")
+            
+            # Check detection layer configuration
+            det_layer = ema.ema.model[-1]
+            print("\n=== Detection Layer Config ===")
+            print(f"Detection layer type: {type(det_layer).__name__}")
+            print(f"Detection layer classes: {det_layer.nc}")
+            print(f"Detection layer anchors: {det_layer.anchors.shape}")
+            print(f"Detection layer stride: {det_layer.stride}")
+            
+            # Add validation parameters debug
+            print("\n=== Validation Parameters ===")
+            print(f"Confidence threshold: {opt.conf_thres}")
+            print(f"IoU threshold: {opt.iou_thres}")
+            print(f"Single class mode: {opt.single_cls}")
+            print(f"Plot flag: {plots and final_epoch}")
+            print(f"Is COCO dataset: {is_coco}")
+            
+            # Debug first batch of validation data
+            for batch_i, (imgs, targets, paths, shapes) in enumerate(testloader):
+                print("\n=== First Validation Batch ===")
+                print(f"Batch images shape: {imgs.shape}")
+                print(f"Batch targets shape: {targets.shape if targets is not None else 'No targets'}")
+                print(f"Number of labels in batch: {len(targets) if targets is not None else 0}")
+                if targets is not None and len(targets):
+                    print(f"Unique classes in batch: {torch.unique(targets[:, 1]).tolist()}")
+                break  # Only print first batch
     # end training
     if rank in [-1, 0]:
         # Plots
