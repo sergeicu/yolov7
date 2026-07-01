@@ -6,22 +6,22 @@ please edit the file called convert_dataset.py file in the following way -
 
 here is an example of a structure of one of the subfolders the main_directory (main_directory that is given in the code as '/home/ch215616/w/code/llm/experiments/yolov7/wrist_fracture_dataset/dcm') 
 
-$ tree 26352528
-26352528
-├── 4310541
-│   └── 26352528
+$ tree <SCAN_ID>
+<SCAN_ID>
+├── <STUDY_ID>
+│   └── <SCAN_ID>
 │       ├── 1_PA
-│       │   ├── DX.1.3.46.670589.30.966169792574.4976.1641822575188
-│       │   └── DX.1.3.46.670589.30.966169792574.4976.1641822575188.~1~
+│       │   ├── DX.<DICOM_UID_1>
+│       │   └── DX.<DICOM_UID_1>.~1~
 │       ├── 2_Oblique
-│       │   ├── DX.1.3.46.670589.30.966169792574.4976.1641822575917
-│       │   └── DX.1.3.46.670589.30.966169792574.4976.1641822575917.~1~
+│       │   ├── DX.<DICOM_UID_2>
+│       │   └── DX.<DICOM_UID_2>.~1~
 │       ├── 3_Lateral
-│       │   ├── DX.1.3.46.670589.30.966169792574.4976.1641822576847
-│       │   └── DX.1.3.46.670589.30.966169792574.4976.1641822576847.~1~
+│       │   ├── DX.<DICOM_UID_3>
+│       │   └── DX.<DICOM_UID_3>.~1~
 │       └── 999_FUJI Basic Text SR for HL7 Radiological Report
-│           ├── SRt.1.2.840.113845.11.5000000001785349915.20220110141623.6753591
-│           └── SRt.1.2.840.113845.11.5000000001785349915.20220110141623.6753591.~1~
+│           ├── <DICOM_SR_UID>
+│           └── <DICOM_SR_UID>.~1~
 └── STUDY_INFO
     └── rsp0001.dcm
 
@@ -32,7 +32,7 @@ please note that the depth of folders and subfolders and files may vary in each 
 
 edit the code to adhere to the following: 
 
-1. for top level subdirectories that are found within main_directory  (in the example above it is '26352528')  - only consider folders that start with a number. we will assign a variable called 'scan_id' to it. e.g. in example above scan_id = 26352528. 
+1. for top level subdirectories that are found within main_directory  (in the example above it is '<SCAN_ID>')  - only consider folders that start with a number. we will assign a variable called 'scan_id' to it. e.g. in example above scan_id = <SCAN_ID>.
 
 2. find all the files for each scan_id subdirectory. please note that files can be at different depths of subdirectories inside the scan_id (the depth may vary). 
 

@@ -6,17 +6,17 @@ by extracting report IDs from filenames and checking for matching pairs. It supp
 report file formats and provides detailed analysis of missing or orphaned files.
 
 REPORT FORMATS SUPPORTED:
-1. JSON format: Reports named as '100005253.json'
+1. JSON format: Reports named as '<SCAN_ID>.json'
    - Report ID is extracted as the filename without the .json extension
-   - Example: '100005253.json' → Report ID: '100005253'
+   - Example: '<SCAN_ID>.json' → Report ID: '<SCAN_ID>'
 
-2. Text format: Reports named as '27251943.json'
+2. Text format: Reports named as '<SCAN_ID_2>.json'
    - Report ID is extracted 
-   - Example: '27251943.json' → Report ID: '27251943'
+   - Example: '<SCAN_ID_2>.json' → Report ID: '<SCAN_ID_2>'
 
 IMAGE FORMAT:
 - PNG files named with pattern: '{report_id}-{sequence}_{view}-{index}.png'
-- Examples: '100005253-1_PA-1.png', '100005253-2_Oblique-2.png', '100005253-3_Lateral-0.png'
+- Examples: '<SCAN_ID>-1_PA-1.png', '<SCAN_ID>-2_Oblique-2.png', '<SCAN_ID>-3_Lateral-0.png'
 - Report ID is extracted as the part before the first hyphen
 
 AUTOMATIC DETECTION:

@@ -25,27 +25,7 @@ def main():
                 results.append({'filename': rel_path, 'inversion': inversion})
 
 
-                # Warning: 25237513-1_PA-0.png not found in original directory, skipping.
-                # Warning: 25237513-2_Lateral-2.png not found in original directory, skipping.
-                # Warning: 25237513-3_Lateral-1.png not found in original directory, skipping.
-                # Warning: 25356045-1_PA-0.png not found in original directory, skipping.
-                # Warning: 25356045-2_Lateral-1.png not found in original directory, skipping.
-                # Warning: 25369712-25369712-0.png not found in original directory, skipping.
-                # Warning: 25509899-25509899-2.png not found in original directory, skipping.
-                # Warning: 25663909-1_PA-0.png not found in original directory, skipping.
-                # Warning: 25819909-1_PA-0.png not found in original directory, skipping.
-                # Warning: 25819909-2_Lateral-1.png not found in original directory, skipping.
-                # Warning: 25870895-2_Oblique-3.png not found in original directory, skipping.
-                # Warning: 26051198-1_PA-0.png not found in original directory, skipping.
-                # Warning: 26051198-2_Oblique-3.png not found in original directory, skipping.
-                # Warning: 26051198-3_Lateral-1.png not found in original directory, skipping.
-                # Warning: 26051198-4_Navicular-2.png not found in original directory, skipping.
-                # Warning: 26055389-26055389-0.png not found in original directory, skipping.
-                # Warning: 26055389-26055389-1.png not found in original directory, skipping.
-                # Warning: 26255461-1_PA-0.png not found in original directory, skipping.
-                # Warning: 26255461-2_Lateral-3.png not found in original directory, skipping.
-                # Warning: 26255461-3_Navicular-2.png not found in original directory, skipping.
-                # Warning: 26255461-4_Navicular-1.png not found in original directory, skipping.                
+                # (Example warnings with accession-numbered filenames redacted for PHI safety)
 
     with open(OUTPUT_CSV, 'w', newline='') as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=['filename', 'inversion'])

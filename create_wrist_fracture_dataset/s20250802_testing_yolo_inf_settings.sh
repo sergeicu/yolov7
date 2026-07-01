@@ -482,7 +482,7 @@ python s20250817_fixing_inverted_pngs.py
 
 
     # let's look at missing_pngs.csv and wrong_yolo_results.csv
-    25110721
+    # <ACCESSION_NUMBER>
     ls /lab-share/Rad-Warfield-e2/Groups/Imp-Recons/serge/code/llm/experiments/yolov7/wrist_fracture_dataset/pngs_aug2025/missing_pngs.csv
     ls /lab-share/Rad-Warfield-e2/Groups/Imp-Recons/serge/code/llm/experiments/yolov7/wrist_fracture_dataset/pngs_aug2025/wrong_yolo_results.csv
 

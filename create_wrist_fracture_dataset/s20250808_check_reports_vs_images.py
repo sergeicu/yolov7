@@ -2,9 +2,9 @@
 """
 Script to check correspondence between reports and images.
 Reports can be either:
-- JSON files named like '100005253.json' 
-- Text files named like '27251943_report.txt'
-Images are PNG files named like '100005253-1_PA-1.png', '100005253-2_Oblique-2.png', etc.
+- JSON files named like '<SCAN_ID>.json' 
+- Text files named like '<SCAN_ID_2>_report.txt'
+Images are PNG files named like '<SCAN_ID>-1_PA-1.png', '<SCAN_ID>-2_Oblique-2.png', etc.
 """
 
 import os
@@ -26,13 +26,13 @@ def detect_report_pattern(reports_dir):
     # Check for JSON files first
     json_files = list(reports_path.glob("*.json"))
     if json_files:
-        print("Detected JSON report format (e.g., '100005253.json')")
+        print("Detected JSON report format (e.g., '<SCAN_ID>.json')")
         return "json", json_files
     
     # Check for text files with _report pattern
     txt_files = list(reports_path.glob("*_report.txt"))
     if txt_files:
-        print("Detected text report format (e.g., '27251943_report.txt')")
+        print("Detected text report format (e.g., '<SCAN_ID_2>_report.txt')")
         return "txt", txt_files
     
     # Check for any text files as fallback

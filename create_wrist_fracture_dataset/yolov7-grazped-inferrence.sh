@@ -14,16 +14,16 @@ python detect.py --weights yolov7-p6-bonefracture.pt --conf 0.25 --img-size 1280
 
 # run - save txt files with confidence score 
 o=/fileserver/Rad-Warfield-e2/Groups/Imp-Recons/serge/code/llm/experiments/yolov7/wrist_fracture_dataset/results/v1
-f=/fileserver/Rad-Warfield-e2/Groups/Imp-Recons/serge/code/llm/experiments/yolov7/yolov7/wrist_fracture_dataset/26375050-26375050-2.png
+f=/fileserver/Rad-Warfield-e2/Groups/Imp-Recons/serge/code/llm/experiments/yolov7/yolov7/wrist_fracture_dataset/<SCAN_ID>-<SCAN_ID>-2.png
 python detect.py --weights yolov7-p6-bonefracture.pt --conf 0.25 --img-size 1280 --source $f --save-txt --save-conf --project $o --name run1
 
 
 # run - save txt files with confidence score - 2 
 o=/fileserver/Rad-Warfield-e2/Groups/Imp-Recons/serge/code/llm/experiments/yolov7/wrist_fracture_dataset/results/v1
 fo=/fileserver/Rad-Warfield-e2/Groups/Imp-Recons/serge/code/llm/experiments/yolov7/yolov7/wrist_fracture_dataset/
-cp $fo/26375050-26375050-2.png $o 
-cp $fo/26503356-2_Lateral-1.png $o 
-cp $fo/26737967-6_Lateral-2.png $o 
+cp $fo/<SCAN_ID_1>.png $o
+cp $fo/<SCAN_ID_2>.png $o
+cp $fo/<SCAN_ID_3>.png $o
 python detect.py --weights yolov7-p6-bonefracture.pt --conf 0.25 --img-size 1280 --source $o/ --save-txt --save-conf --project $o --name run1
 
 

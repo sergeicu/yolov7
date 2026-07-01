@@ -6,17 +6,17 @@ by extracting report IDs from filenames and checking for matching pairs. It supp
 report file formats and provides detailed analysis of missing or orphaned files.
 
 REPORT FORMATS SUPPORTED:
-1. JSON format: Reports named as '100005253.json'
+1. JSON format: Reports named as '<SCAN_ID>.json'
    - Report ID is extracted as the filename without the .json extension
-   - Example: '100005253.json' → Report ID: '100005253'
+   - Example: '<SCAN_ID>.json' → Report ID: '<SCAN_ID>'
 
-2. Text format: Reports named as '27251943_report.txt'
+2. Text format: Reports named as '<SCAN_ID_2>_report.txt'
    - Report ID is extracted by removing the '_report' suffix
-   - Example: '27251943_report.txt' → Report ID: '27251943'
+   - Example: '<SCAN_ID_2>_report.txt' → Report ID: '<SCAN_ID_2>'
 
 IMAGE FORMAT:
 - PNG files named with pattern: '{report_id}-{sequence}_{view}-{index}.png'
-- Examples: '100005253-1_PA-1.png', '100005253-2_Oblique-2.png', '100005253-3_Lateral-0.png'
+- Examples: '<SCAN_ID>-1_PA-1.png', '<SCAN_ID>-2_Oblique-2.png', '<SCAN_ID>-3_Lateral-0.png'
 - Report ID is extracted as the part before the first hyphen
 
 AUTOMATIC DETECTION:
@@ -80,9 +80,9 @@ VERSION: 1.0
 """
 Script to check correspondence between reports and images.
 Reports can be either:
-- JSON files named like '100005253.json' 
-- Text files named like '27251943_report.txt'
-Images are PNG files named like '100005253-1_PA-1.png', '100005253-2_Oblique-2.png', etc.
+- JSON files named like '<SCAN_ID>.json' 
+- Text files named like '<SCAN_ID_2>_report.txt'
+Images are PNG files named like '<SCAN_ID>-1_PA-1.png', '<SCAN_ID>-2_Oblique-2.png', etc.
 """
 
 import os
@@ -104,13 +104,13 @@ def detect_report_pattern(reports_dir):
     # Check for JSON files first
     json_files = list(reports_path.glob("*.json"))
     if json_files:
-        print("Detected JSON report format (e.g., '100005253.json')")
+        print("Detected JSON report format (e.g., '<SCAN_ID>.json')")
         return "json", json_files
     
     # Check for text files with _report pattern
     txt_files = list(reports_path.glob("*_report.txt"))
     if txt_files:
-        print("Detected text report format (e.g., '27251943_report.txt')")
+        print("Detected text report format (e.g., '<SCAN_ID_2>_report.txt')")
         return "txt", txt_files
     
     # Check for any text files as fallback

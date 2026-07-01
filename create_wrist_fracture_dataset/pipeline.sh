@@ -19,7 +19,7 @@ python convert_dataset_skip_bad_files.py
     ValueError: The length of the pixel data in the dataset (0 bytes) doesnt match the expected length (1719326 bytes). The dataset may be corrupted or there may be an issue with the pixel data handler.
     # test again 
     cd ~/w/code/llm/experiments/yolov7
-    python dicom-to-png/mritopng.py wrist_fracture_dataset/dcm/26479968/4504811/26479968/1_PA/DX.1.3.46.670589.30.966169783796.4948.1653061444518 wrist_fracture_dataset/dcm/26479968/remove.png
+    python dicom-to-png/mritopng.py wrist_fracture_dataset/dcm/<SCAN_ID>/<STUDY_ID>/<SCAN_ID>/1_PA/<DICOM_FILE> wrist_fracture_dataset/dcm/<SCAN_ID>/remove.png
     # removing the duplicates (~) dcm files. then re-running the dcm fetch pipeline and then re-running conversion helps... 
     # this is manual step - will bring extra 21 subjects into the dataset (out of 14,000....) with possibly 3-4 images in each subject
 

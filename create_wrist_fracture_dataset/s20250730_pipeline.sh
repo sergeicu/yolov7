@@ -214,40 +214,26 @@ python s20250808_check_reports_vs_images.py --reports $json_source_folder --imag
     - Average images per report: 1.21
 
             === Checking if reports have corresponding images ===
-            ❌ Found 230 reports without corresponding images:
+            Found 230 reports without corresponding images:
             Examples of reports without images:
-            - 25110721
-            - 25116221
-            - 25116948
-            - 25118621
-            - 25119648
-            - 25119692
-            - 25120326
-            - 25123545
-            - 25123648
-            - 25127051
+            - <ACCESSION_1>
+            - <ACCESSION_2>
+            - ... (accession numbers redacted)
             ... and 220 more
-            📊 Reports with at least one image: 10336
+            Reports with at least one image: 10336
 
             === Checking if images have corresponding reports ===
-            ❌ Found 2217 image report IDs without corresponding reports:
+            Found 2217 image report IDs without corresponding reports:
             Examples of image report IDs without reports:
-            - 120953 (from images)
-            - 25109542 (from images)
-            - 25109696 (from images)
-            - 25110402 (from images)
-            - 25110817 (from images)
-            - 25111270 (from images)
-            - 25112143 (from images)
-            - 25114019 (from images)
-            - 25114369 (from images)
-            - 25115572 (from images)
+            - <ACCESSION_1> (from images)
+            - <ACCESSION_2> (from images)
+            - ... (accession numbers redacted)
             ... and 2207 more
-            📊 Image report IDs with corresponding reports: 10336
+            Image report IDs with corresponding reports: 10336
 
 
-            ls $png_source_folder/25110721*
-            ls $json_source_folder/25110721*
+            ls $png_source_folder/<ACCESSION>*
+            ls $json_source_folder/<ACCESSION>*
 
 
 # need to remove reports without images (or )

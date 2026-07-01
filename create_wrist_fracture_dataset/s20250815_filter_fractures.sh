@@ -11,7 +11,7 @@
                                     python grounding_report_split_regions_s20250821_analyze.py  # aggregate these csvs into statistics and show results                 
 
                         # check what missing_pngs.csv and wrong_yolo_results.csv
-                                    25110721
+                                    # <ACCESSION_NUMBER>
                                     ls /lab-share/Rad-Warfield-e2/Groups/Imp-Recons/serge/code/llm/experiments/yolov7/wrist_fracture_dataset/pngs_aug2025/missing_pngs.csv
                                     ls /lab-share/Rad-Warfield-e2/Groups/Imp-Recons/serge/code/llm/experiments/yolov7/wrist_fracture_dataset/pngs_aug2025/wrong_yolo_results.csv
 

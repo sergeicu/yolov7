@@ -59,6 +59,4 @@ if __name__ == "__main__":
 
 
 
-    # /lab-share/Rad-Afacan-e2/Public/serge/code/llm/experiments/yolov7/create_wrist_fracture_dataset/_no_reports_found/26199845-1_PA-0.png
-
-    #25410977
+    # Example path: /lab-share/.../create_wrist_fracture_dataset/_no_reports_found/<SCAN_ID>-1_PA-0.png
