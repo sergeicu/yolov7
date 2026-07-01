@@ -1,0 +1,10 @@
+# Pilot subset: 15% stratified sample of Config C
+# For fast parameter selection (sweep) - 50 epochs only
+path: /lab-share/Rad-Afacan-e2/Public/serge/code/llm/experiments/yolo_llm/experiments/s20260324_datasets/config_c_pilot_classid3
+
+train: /lab-share/Rad-Afacan-e2/Public/serge/code/llm/experiments/yolo_llm/experiments/s20260324_datasets/config_c_pilot_classid3/train/images
+val: /lab-share/Rad-Afacan-e2/Public/serge/code/llm/experiments/yolo_llm/experiments/s20260324_datasets/config_c_pilot_classid3/val/images
+test: /lab-share/Rad-Afacan-e2/Public/serge/code/llm/experiments/yolo_llm/experiments/s20260324_datasets/test/images
+
+nc: 4
+names: ['unused_class_0', 'unused_class_1', 'unused_class_2', 'fracture']

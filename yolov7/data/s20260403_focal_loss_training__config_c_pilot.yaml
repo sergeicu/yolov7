@@ -1,0 +1,10 @@
+# Pilot subset: 15% stratified sample of Config C
+# For fast parameter selection (sweep) - 50 epochs only
+path: /lab-share/Rad-Afacan-e2/Public/serge/code/llm/experiments/yolo_llm/experiments/s20260324_datasets/config_c_pilot
+
+train: /lab-share/Rad-Afacan-e2/Public/serge/code/llm/experiments/yolo_llm/experiments/s20260324_datasets/config_c_pilot/train/images
+val: /lab-share/Rad-Afacan-e2/Public/serge/code/llm/experiments/yolo_llm/experiments/s20260324_datasets/config_c_pilot/val/images
+test: /lab-share/Rad-Afacan-e2/Public/serge/code/llm/experiments/yolo_llm/experiments/s20260324_datasets/test/images
+
+nc: 4
+names: ['distal_radius_fx', 'distal_ulna_fx', 'scaphoid_fx', 'ulna_styloid_fx']

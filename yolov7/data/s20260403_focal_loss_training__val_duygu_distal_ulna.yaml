@@ -1,0 +1,8 @@
+# val_duygu dataset: distal_ulna fractures only
+# Labels remapped: all boxes → class 1 (distal_ulna_fx)
+# Source: s20251106_new_test_set_with_ref/distal_ulna_united
+
+path: /lab-share/Rad-Afacan-e2/Public/serge/code/llm/experiments/yolo_llm/experiments/s20260324_datasets/val_duygu/val_duygu_distal_ulna
+val: /lab-share/Rad-Afacan-e2/Public/serge/code/llm/experiments/yolo_llm/experiments/s20260324_datasets/val_duygu/val_duygu_distal_ulna/images
+nc: 4
+names: ['distal_radius_fx', 'distal_ulna_fx', 'scaphoid_fx', 'ulna_styloid_fx']

@@ -1,0 +1,6 @@
+# Tiny subset for smoke test - 80 train, 40 val
+path: /lab-share/Rad-Afacan-e2/Public/serge/code/llm/experiments/yolo_llm/experiments/s20260324_datasets/config_c_tiny
+train: /lab-share/Rad-Afacan-e2/Public/serge/code/llm/experiments/yolo_llm/experiments/s20260324_datasets/config_c_tiny/train/images
+val: /lab-share/Rad-Afacan-e2/Public/serge/code/llm/experiments/yolo_llm/experiments/s20260324_datasets/config_c_tiny/val/images
+nc: 4
+names: ['distal_radius_fx', 'distal_ulna_fx', 'scaphoid_fx', 'ulna_styloid_fx']

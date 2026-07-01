@@ -1,0 +1,11 @@
+{
+  "timestamp": "2025-08-05T16:11:56.772355",
+  "source_dir": "/home/ch215616/w/code/llm/experiments/yolov7/create_elbow_fracture_dataset",
+  "dest_dir": "/home/ch215616/ww/code/llm/experiments/yolov7/create_elbow_fracture_dataset",
+  "root_only": true,
+  "skip_dirs": null,
+  "identical_files": [],
+  "moved_count": 0,
+  "skipped_count": 0,
+  "total_processed": 0
+}

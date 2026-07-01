@@ -1,0 +1,67 @@
+# PHI data files -- NEVER commit
+*.xlsx
+dataset_info.csv
+create_wrist_fracture_dataset/missing_pngs.csv
+create_wrist_fracture_dataset/wrong_yolo_results.csv
+create_wrist_fracture_dataset/empty_folders.txt
+create_wrist_fracture_dataset/no_png_log.txt
+create_wrist_fracture_dataset/no_report_log.txt
+create_wrist_fracture_dataset/pngs_with_no_reports.txt
+create_wrist_fracture_dataset/removed_files*.txt
+create_wrist_fracture_dataset/convert_dataset_claude_instructions.txt
+create_wrist_fracture_dataset/extraction_aug_2025/bad_study_ids.csv
+create_wrist_fracture_dataset/extraction_aug_2025/NOT_XRWRIST.csv
+create_wrist_fracture_dataset/extraction_aug_2025/XRWRIST.csv
+create_wrist_fracture_dataset/extraction_aug_2025/studyid_inversion.csv
+create_wrist_fracture_dataset/extraction_aug_2025/png_inversion.csv
+create_wrist_fracture_dataset/extraction_aug_2025/progress.txt
+create_wrist_fracture_dataset/extraction_aug_2025/progress_old.txt
+create_wrist_fracture_dataset/extraction_aug_2025/quicktest_files.json
+wrist_fracture_dataset/missing_impressions.txt
+
+# Image and data directories
+wrist_fracture_dataset/pngs*/
+wrist_fracture_dataset/dcm/
+wrist_fracture_dataset/reports*/
+wrist_fracture_dataset/andy_sample1*/
+elbow_fracture_dataset/
+create_wrist_fracture_dataset/_no_reports_found/
+create_wrist_fracture_dataset/pngs_aug2025*/
+create_wrist_fracture_dataset/pngs_inverted_from_png_csv/
+create_wrist_fracture_dataset/reports_aug2025/
+create_wrist_fracture_dataset/testing_andy_labelled_images/
+create_wrist_fracture_dataset/extraction_aug_2025/dcm/
+create_wrist_fracture_dataset/extraction_aug_2025/logs/
+data_zip/
+
+# Model weights
+*.pt
+*.onnx
+*.engine
+*.pth
+
+# Training outputs
+yolov7/runs/
+yolov7/wandb/
+YOLOv7-Bone-Fracture-Detection/runs/
+YOLOv7-Bone-Fracture-Detection/bch_data/
+YOLOv7-Bone-Fracture-Detection/predictions/
+
+# Virtual environments
+venv/
+yolov7/venv/
+
+# Python cache
+__pycache__/
+*.pyc
+*.cache
+
+# Zip files
+*.zip
+
+# Logs
+*.log
+create_wrist_fracture_dataset/logs/
+
+# Misc
+.DS_Store
